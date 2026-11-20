@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Four AI — Minimax & Alpha-Beta Pruning</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="assets/css/animations.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
+
+    <!-- Chart.js for Educational and Analytics Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body data-theme="dark">
+
+    <!-- Loading Screen with Real WebAssembly / Pyodide Progress -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-title">CONNECT FOUR AI</div>
+            <div id="loading-status-text" class="loading-status-text">Booting WebAssembly Python AI Engine...</div>
+            <div class="loading-progress-track">
+                <div id="loading-progress-bar" class="loading-progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Root Container -->
+    <div class="app-container">
+        
+        <!-- Navigation Header -->
+        <header class="navbar">
+            <div class="brand-section">
+                <div class="brand-logo">4</div>
+                <div class="brand-text">
+                    <h1>CONNECT FOUR</h1>
+                    <p>Challenge the AI &bull; University AI Project</p>
+                </div>
+            </div>
+
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#home" class="nav-item active" data-section="home">🎮 Home</a></li>
+                    <li><a href="#ai-lab" class="nav-item" data-section="ai-lab">🔬 AI Lab</a></li>
+                    <li><a href="#analytics" class="nav-item" data-section="analytics">📊 Analytics</a></li>
+                    <li><a href="#how-to-play" class="nav-item" data-section="how-to-play">📖 How to Play</a></li>
+                </ul>
+            </nav>
+
+            <div class="nav-controls">
+                <button id="btn-toggle-sound" class="icon-btn" title="Toggle Sound Effects" aria-label="Toggle Sound">
+                    <span id="sound-icon">🔊</span>
+                </button>
+                <button id="btn-toggle-theme" class="icon-btn" title="Toggle Theme (Dark/Light)" aria-label="Toggle Theme">
+                    <span id="theme-icon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ===================================================================
+             SECTION 1: HOME (MAIN GAMING DASHBOARD - 3 COLUMN LAYOUT)
+             =================================================================== -->
+        <main id="section-home" class="page-section active">
+            <div class="game-layout">
+                
+                <!-- Left Column: Human Card, Settings, Game Controls -->
+                <aside class="column-left">
+                    
+                    <!-- Human Player Card -->
+                    <div id="card-player-human" class="player-card card-human">
+                        <div class="avatar-wrapper">
+                            <span>👤</span>
+                        </div>
+                        <div class="player-info">
+                            <div class="player-name-row">
+                                <span class="player-name">You</span>
+                                <span class="badge-tag badge-human">Human</span>
+                            </div>
+                            <div class="player-subtitle">Red Player</div>
+                        </div>
+                        <div class="score-counter">
+                            <span class="score-label">Wins</span>
+                            <span id="human-win-count" class="score-num">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Game Settings Card -->
+                    <div class="glass-card">
+                        <div class="card-title">
+                            <span>Game Settings</span>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">⚙️</span>
+                        </div>
+
+                        <!-- First Move -->
+                        <div class="settings-group">
+                            <label class="settings-label">First Move</label>
+                            <div class="toggle-group">
+                                <label>
+                                    <input type="radio" name="first-move" value="human" checked>
+                                    <span>You</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="first-move" value="ai">
+                                    <span>Computer</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Algorithm Choice -->
+                        <div class="settings-group">
+                            <label class="settings-label">Python AI Algorithm</label>
+                            <div class="toggle-group">
+                                <label>
+                                    <input type="radio" name="algorithm-choice" value="alpha_beta" checked>
+                                    <span>Alpha-Beta</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="algorithm-choice" value="minimax">
+                                    <span>Minimax</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Difficulty Level (Search Depth) -->
+                        <div class="settings-group">
+                            <label class="settings-label">Difficulty / Depth</label>
+                            <div class="toggle-group">
+                                <label>
+                                    <input type="radio" name="difficulty-choice" value="easy">
+                                    <span>Easy (D1)</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="difficulty-choice" value="medium" checked>
+                                    <span>Med (D3)</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="difficulty-choice" value="hard">
+                                    <span>Hard (D5)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Game Action Buttons -->
+                    <div class="glass-card">
+                        <div class="controls-grid">
+                            <button id="btn-new-game" class="btn-game btn-primary-action">
+                                <span>⚡</span> New Game
+                            </button>
+                            <button id="btn-undo" class="btn-game" title="Undo Last Move">
+                                <span>↩️</span> Undo
+                            </button>
+                            <button id="btn-hint" class="btn-game btn-hint" title="Ask Python AI for Best Human Move">
+                                <span>💡</span> Hint
+                            </button>
+                            <button id="btn-restart" class="btn-game" title="Restart Match" style="grid-column: span 2;">
+                                <span>🔄</span> Restart Match
+                            </button>
+                        </div>
+                    </div>
+
+                </aside>
+
+                <!-- Center Column: Connect Four Board -->
+                <section class="column-center">
+                    
+                    <div class="board-header">
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center;">
+                            <div id="game-status-pill" class="status-pill human-turn">
+                                <span class="status-dot dot-human"></span> YOUR TURN
+                            </div>
+                            <div class="status-pill" style="font-size: 0.75rem; color: var(--text-muted);" title="Match Draws">
+                                Draws: <strong id="draw-count" style="color: var(--text-primary); margin-left: 4px;">0</strong>
+                            </div>
+                        </div>
+                        <div id="hint-notification" class="hint-notification">
+                            AI recommends Column 4
+                        </div>
+                    </div>
+
+                    <!-- Interactive Board with Floating Preview -->
+                    <div id="board-wrapper" class="board-wrapper">
+                        <!-- Floating Ghost Piece for Hover Preview -->
+                        <div id="preview-piece" class="preview-piece piece-human"></div>
+
+                        <!-- Electric Blue Cabinet Container -->
+                        <div class="board-cabinet">
+                            <div id="board-grid" class="board-grid">
+                                <!-- 42 circular slots rendered dynamically by game-ui.js -->
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- Right Column: AI Player Card, Live Metrics, Performance Chart, History -->
+                <aside class="column-right">
+                    
+                    <!-- AI Player Card -->
+                    <div id="card-player-ai" class="player-card card-ai">
+                        <div class="avatar-wrapper">
+                            <span>🤖</span>
+                        </div>
+                        <div class="player-info">
+                            <div class="player-name-row">
+                                <span class="player-name">AI Agent</span>
+                                <span class="badge-tag badge-ai">Computer</span>
+                            </div>
+                            <div class="player-subtitle">Yellow Player</div>
+                        </div>
+                        <div class="score-counter">
+                            <span class="score-label">Wins</span>
+                            <span id="ai-win-count" class="score-num">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Real-Time AI Analytics Card -->
+                    <div class="glass-card">
+                        <div class="card-title">
+                            <span>AI Decision Metrics</span>
+                            <span id="metric-depth" class="badge-tag badge-ai">Depth 3</span>
+                        </div>
+                        <div class="metrics-grid">
+                            <div class="metric-item">
+                                <div class="metric-title">Algorithm</div>
+                                <div id="metric-algo" class="metric-value" style="font-size: 0.95rem;">Alpha-Beta</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-title">Execution Time</div>
+                                <div id="metric-time" class="metric-value">0.0 ms</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-title">Nodes Visited</div>
+                                <div id="metric-nodes" class="metric-value">0</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-title">Pruned Nodes</div>
+                                <div id="metric-pruned" class="metric-value">0</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-title">Best Move</div>
+                                <div id="metric-move" class="metric-value">-</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-title">Heuristic Score</div>
+                                <div id="metric-score" class="metric-value">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Compact Comparison Chart -->
+                    <div class="glass-card">
+                        <div class="card-title">
+                            <span>Search Tree Nodes</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Real vs Est</span>
+                        </div>
+                        <div class="chart-container-compact">
+                            <canvas id="chart-live-comparison"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Move History -->
+                    <div class="glass-card">
+                        <div class="card-title">
+                            <span>Move History</span>
+                            <button id="btn-clear-history" class="icon-btn" style="width: auto; height: auto; padding: 2px 8px; font-size: 0.75rem;" title="Clear History">
+                                Clear
+                            </button>
+                        </div>
+                        <div id="game-history-list" class="history-scroll-box">
+                            <!-- Moves inserted dynamically -->
+                        </div>
+                    </div>
+
+                </aside>
+
+            </div>
+        </main>
+
+        <!-- ===================================================================
+             SECTION 2: AI LAB (INTERACTIVE EDUCATIONAL LABORATORY)
+             =================================================================== -->
+        <section id="section-ai-lab" class="page-section">
+            <div class="glass-card" style="margin-bottom: 20px;">
+                <div class="card-title" style="font-size: 1.3rem;">
+                    <span>🔬 Artificial Intelligence Laboratory</span>
+                    <span class="badge-tag badge-human">Interactive Academy</span>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                    Explore the inner workings of depth-limited game tree searches. The visualizations below are powered directly by actual Python search execution traces in Pyodide, demonstrating how Minimax evaluates moves and how Alpha-Beta Pruning safely eliminates redundant branches.
+                </p>
+            </div>
+
+            <!-- Lab Tabs Navigation -->
+            <div class="lab-tabs">
+                <button class="lab-tab-btn active" data-target="lab-minimax">🌳 Minimax Explorer</button>
+                <button class="lab-tab-btn" data-target="lab-alphabeta">✂️ Alpha-Beta Pruning Explorer</button>
+                <button class="lab-tab-btn" data-target="lab-theory">📚 Algorithm Theory & Pseudocode</button>
+            </div>
+
+            <!-- Tab 1: Minimax Explorer -->
+            <div id="lab-minimax" class="lab-tab-content active">
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                    <div>
+                        <div class="glass-card">
+                            <div class="card-title">
+                                <span>Game Search Tree</span>
+                                <button id="btn-generate-tree" class="btn-game btn-primary-action" style="padding: 8px 16px; font-size: 0.85rem;">
+                                    🔄 Refresh Tree from Current Board
+                                </button>
+                            </div>
+                            <div id="tree-loading-indicator" style="display: none; color: var(--primary-blue); font-size: 0.85rem; margin-bottom: 10px;">
+                                Generating Python search trace...
+                            </div>
+                            <!-- Tree Visualization Canvas -->
+                            <div id="tree-visualization-canvas" class="tree-container">
+                                <!-- Tree rendered dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Node Inspector Panel -->
+                    <div>
+                        <div class="glass-card">
+                            <div class="card-title">Node Inspector</div>
+                            <div id="node-inspector-panel">
+                                <div class="inspector-card">
+                                    <p style="color: var(--text-muted); font-size: 0.85rem;">Click any node card in the game tree to inspect its heuristic evaluation score, role (MAX/MIN), move column, and pruning status.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Alpha-Beta Pruning Explorer -->
+            <div id="lab-alphabeta" class="lab-tab-content">
+                <div class="glass-card">
+                    <div class="card-title">
+                        <span>Alpha-Beta Pruning Step-by-Step Debugger</span>
+                        <span id="ab-step-counter" class="badge-tag badge-ai">Step 0 of 0</span>
+                    </div>
+
+                    <!-- Debugger Controls -->
+                    <div class="ab-controls-bar">
+                        <div class="ab-btn-group">
+                            <button id="ab-btn-start" class="btn-debug" style="background: var(--grad-primary); color: #FFF;">⚡ Start Trace</button>
+                            <button id="ab-btn-prev" class="btn-debug">◀ Prev Step</button>
+                            <button id="ab-btn-next" class="btn-debug">Next Step ▶</button>
+                            <button id="ab-btn-auto" class="btn-debug">▶ Auto Play</button>
+                            <button id="ab-btn-reset" class="btn-debug">Reset</button>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label style="font-size: 0.8rem; color: var(--text-secondary);">Speed:</label>
+                            <select id="ab-speed-select" class="btn-debug" style="padding: 6px 10px;">
+                                <option value="1200">Slow (1.2s)</option>
+                                <option value="800" selected>Normal (0.8s)</option>
+                                <option value="400">Fast (0.4s)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bounds HUD -->
+                    <div class="ab-bounds-hud">
+                        <div class="bound-box">
+                            Alpha (&alpha;): <span id="ab-val-alpha" class="bound-val">-&infin;</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Best guaranteed score for MAX</span>
+                        </div>
+                        <div class="bound-box">
+                            Beta (&beta;): <span id="ab-val-beta" class="bound-val">+&infin;</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Best guaranteed score for MIN</span>
+                        </div>
+                    </div>
+
+                    <!-- Live Explanation Banner -->
+                    <div id="ab-status-banner" class="ab-status-banner">
+                        Click "Start Trace" to inspect step-by-step branch pruning on the current board state.
+                    </div>
+
+                    <!-- Visual Stage for Pruned Branches -->
+                    <div id="ab-visual-stage" class="tree-container" style="min-height: 260px;">
+                        <!-- Graphical step representation rendered dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Algorithm Theory & Pseudocode -->
+            <div id="lab-theory" class="lab-tab-content">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Minimax Theory -->
+                    <div class="glass-card">
+                        <div class="card-title" style="color: var(--primary-blue);">Minimax Algorithm</div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.6;">
+                            Minimax is a recursive backtracking algorithm used in zero-sum, two-player games of perfect information. One player (MAX) aims to maximize the evaluation score, while the adversary (MIN) aims to minimize it.
+                        </p>
+                        <pre style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: var(--radius-md); font-size: 0.8rem; overflow-x: auto; color: #F8FAFC; border: 1px solid var(--border-color);">
+function MINIMAX(node, depth, isMaximizing):
+    if depth == 0 or node is terminal:
+        return EVALUATE(node)
+
+    if isMaximizing:
+        maxEval = -&infin;
+        for child in node.children:
+            eval = MINIMAX(child, depth - 1, FALSE)
+            maxEval = max(maxEval, eval)
+        return maxEval
+    else:
+        minEval = +&infin;
+        for child in node.children:
+            eval = MINIMAX(child, depth - 1, TRUE)
+            minEval = min(minEval, eval)
+        return minEval</pre>
+                        <div style="margin-top: 14px; font-size: 0.8rem; color: var(--text-secondary);">
+                            <strong>Time Complexity:</strong> O(b<sup>d</sup>)<br>
+                            <strong>Space Complexity:</strong> O(b &times; d)
+                        </div>
+                    </div>
+
+                    <!-- Alpha-Beta Theory -->
+                    <div class="glass-card">
+                        <div class="card-title" style="color: var(--success);">Alpha-Beta Pruning</div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.6;">
+                            Alpha-Beta pruning optimizes Minimax without altering the final decision. It maintains two thresholds: &alpha; (maximum lower bound) and &beta; (minimum upper bound). If &beta; &le; &alpha;, the opponent can already force a worse outcome, so the remaining branches are safely discarded.
+                        </p>
+                        <pre style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: var(--radius-md); font-size: 0.8rem; overflow-x: auto; color: #F8FAFC; border: 1px solid var(--border-color);">
+function ALPHA_BETA(node, depth, &alpha;, &beta;, isMaximizing):
+    if depth == 0 or node is terminal:
+        return EVALUATE(node)
+
+    if isMaximizing:
+        maxEval = -&infin;
+        for child in node.children:
+            eval = ALPHA_BETA(child, depth - 1, &alpha;, &beta;, FALSE)
+            maxEval = max(maxEval, eval)
+            &alpha; = max(&alpha;, eval)
+            if &beta; &le; &alpha;:
+                break  // &beta; cutoff (pruning)
+        return maxEval
+    else:
+        minEval = +&infin;
+        for child in node.children:
+            eval = ALPHA_BETA(child, depth - 1, &alpha;, &beta;, TRUE)
+            minEval = min(minEval, eval)
+            &beta; = min(&beta;, eval)
+            if &beta; &le; &alpha;:
+                break  // &alpha; cutoff (pruning)
+        return minEval</pre>
+                        <div style="margin-top: 14px; font-size: 0.8rem; color: var(--text-secondary);">
+                            <strong>Optimal Time Complexity:</strong> O(b<sup>d/2</sup>)<br>
+                            <strong>Move Ordering:</strong> Center column evaluated first for maximum pruning!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================
+             SECTION 3: ANALYTICS (PERFORMANCE DASHBOARD & BENCHMARKING)
+             =================================================================== -->
+        <section id="section-analytics" class="page-section">
+            
+            <!-- KPI Cards Overview -->
+            <div class="stats-kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-title">Total Games</div>
+                    <div id="stat-total-games" class="kpi-value">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Human Wins</div>
+                    <div id="stat-human-wins" class="kpi-value" style="color: var(--human-red);">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">AI Wins</div>
+                    <div id="stat-ai-wins" class="kpi-value" style="color: var(--ai-yellow);">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Draws</div>
+                    <div id="stat-draws" class="kpi-value">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Total AI Decisions</div>
+                    <div id="stat-total-decisions" class="kpi-value">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Avg Search Time</div>
+                    <div id="stat-avg-search-time" class="kpi-value">0.0 ms</div>
+                </div>
+            </div>
+
+            <!-- Dedicated Benchmark Control -->
+            <div class="glass-card" style="margin-bottom: 24px;">
+                <div class="card-title">
+                    <span>⚡ Live Algorithm Benchmark Runner</span>
+                    <span id="benchmark-status-badge" class="badge-tag">Ready</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+                    Executes both Minimax and Alpha-Beta on the exact same board state, search depth, and evaluation function to provide a 100% fair scientific comparison.
+                </p>
+
+                <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <label style="font-size: 0.85rem; font-weight: 700;">Benchmark Search Depth:</label>
+                    <select id="benchmark-depth-select" class="btn-game" style="padding: 8px 16px; background: rgba(0,0,0,0.3); border: var(--card-border);">
+                        <option value="1">Depth 1 (Instant)</option>
+                        <option value="2">Depth 2 (Quick)</option>
+                        <option value="3" selected>Depth 3 (Standard)</option>
+                        <option value="4">Depth 4 (Advanced)</option>
+                        <option value="5">Depth 5 (Deep Search)</option>
+                    </select>
+                    <button id="btn-run-benchmark" class="btn-game btn-primary-action" style="padding: 10px 24px;">
+                        ⚡ Run Live Benchmark
+                    </button>
+                    <button id="btn-reset-stats" class="btn-game" style="margin-left: auto; background: rgba(255, 48, 79, 0.15); color: var(--human-red); border: 1px solid rgba(255, 48, 79, 0.3);">
+                        🗑️ Reset Statistics
+                    </button>
+                </div>
+
+                <!-- Comparison Table -->
+                <div class="benchmark-table-wrapper">
+                    <table class="benchmark-table">
+                        <thead>
+                            <tr>
+                                <th>Comparison Metric</th>
+                                <th>Minimax Algorithm</th>
+                                <th>Alpha-Beta Pruning</th>
+                                <th>Performance Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Optimal Move Chosen</strong></td>
+                                <td id="bench-mm-move">-</td>
+                                <td id="bench-ab-move">-</td>
+                                <td><span id="bench-equivalence-badge" class="badge-verified">Verified Equivalent</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Heuristic Evaluation Score</strong></td>
+                                <td id="bench-mm-score">-</td>
+                                <td id="bench-ab-score">-</td>
+                                <td>Exact same value</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Nodes Explored</strong></td>
+                                <td id="bench-mm-nodes">-</td>
+                                <td id="bench-ab-nodes">-</td>
+                                <td id="bench-nodes-saved" style="color: var(--success); font-weight: 700;">-</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Pruned Nodes</strong></td>
+                                <td id="bench-mm-pruned">0 (No Pruning)</td>
+                                <td id="bench-ab-pruned">-</td>
+                                <td>Subtrees safely cut off</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Execution Time</strong></td>
+                                <td id="bench-mm-time">-</td>
+                                <td id="bench-ab-time">-</td>
+                                <td id="bench-speedup" style="color: var(--primary-blue); font-weight: 700;">-</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Search Depth</strong></td>
+                                <td id="bench-depth" colspan="3">Depth 3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-grid-2col">
+                <div class="chart-card-large">
+                    <div class="card-title">Nodes Visited Comparison</div>
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="chart-analytics-nodes"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card-large">
+                    <div class="card-title">Execution Time (ms)</div>
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="chart-analytics-time"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card-large" style="grid-column: span 2; height: 350px;">
+                    <div class="card-title">
+                        <span>Search Tree Node Growth across Depths (Log Scale)</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Empirical Comparison</span>
+                    </div>
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="chart-analytics-depths"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ===================================================================
+             SECTION 4: HOW TO PLAY & STRATEGY GUIDE
+             =================================================================== -->
+        <section id="section-how-to-play" class="page-section">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="glass-card">
+                    <div class="card-title">Connect Four Rules</div>
+                    <ul style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8; padding-left: 20px;">
+                        <li>Connect Four is played on a vertical grid of <strong>7 columns</strong> and <strong>6 rows</strong> (42 slots).</li>
+                        <li>Players take turns dropping colored discs from the top into any unfilled column.</li>
+                        <li>The disc falls straight down, occupying the lowest available slot within that column.</li>
+                        <li>The first player to align <strong>four consecutive discs</strong> of their color horizontally, vertically, or diagonally wins immediately.</li>
+                        <li>If all 42 slots fill without four in a row, the match ends in a draw.</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card">
+                    <div class="card-title">Winning Strategies</div>
+                    <ul style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8; padding-left: 20px;">
+                        <li><strong>Control the Center Column:</strong> Column 4 (index 3) is involved in up to 40% of all possible four-in-a-row winning lines. The AI evaluation assigns high priority to center column occupancy.</li>
+                        <li><strong>Plan Several Moves Ahead:</strong> Look for multi-threat opportunities where the opponent can only block one of two simultaneous threats.</li>
+                        <li><strong>Avoid Filling Columns Carelessly:</strong> Dropping a piece directly beneath an opponent's potential winning square gives them the victory on their next turn.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Game-Over Celebration Modal -->
+    <div id="game-over-modal" class="modal-overlay">
+        <div class="modal-dialog">
+            <div id="modal-icon" class="modal-trophy">🏆</div>
+            <h2 id="modal-title" class="modal-title">Victory!</h2>
+            <p id="modal-subtitle" class="modal-subtitle">You connected 4 in a row!</p>
+            <button id="modal-btn-play-again" class="modal-btn">⚡ Play Again</button>
+        </div>
+    </div>
+
+    <!-- Scripts (Ordered for clean initialization) -->
+    <script src="assets/js/python-bundle.js"></script>
+    <script src="assets/js/audio.js"></script>
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/pyodide-manager.js"></script>
+    <script src="assets/js/game-controller.js"></script>
+    <script src="assets/js/game-ui.js"></script>
+    <script src="assets/js/analytics.js"></script>
+    <script src="assets/js/ai-lab.js"></script>
+    <script src="assets/js/navigation.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
